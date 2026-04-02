@@ -201,11 +201,19 @@ class MemoryManager:
                 full_metadata["run_id"] = run_id
 
             # Store in Mem0 cloud platform with user_id and run_id as first-class parameters
+            # self.memory.add(
+            #     content,
+            #     user_id=user_id,
+            #     run_id=run_id,
+            #     metadata=full_metadata
+            # )
+            # May need to change above to:
             self.memory.add(
-                content,
+                messages=[{"role": "user", "content": content}],
+                # content,
                 user_id=user_id,
-                run_id=run_id,
-                metadata=full_metadata
+                # run_id=run_id,
+                # metadata=full_metadata)
             )
 
             logger.info(f"Memory stored for user={user_id} with context (agent={agent_id}, session={run_id})")
@@ -317,11 +325,14 @@ class MemoryManager:
                 filters.update(metadata_filters)
 
             # Search using Mem0 cloud platform with filters
-            results = self.memory.search(
-                query=query,
-                filters=filters,
-                limit=limit
-            )
+            # results = self.memory.search(
+            #     query=query,
+            #     filters=filters,
+            #     limit=limit
+            # )
+
+            # For search:
+            results = self.memory.search(query=query, filters={"user_id": user_id}, version="v2", limit=limit)
 
             # DEBUG: Log raw results from Mem0
             logger.debug(f"Raw Mem0 search results type: {type(results)}")
@@ -474,7 +485,8 @@ class MemoryManager:
                         logger.warning(f"Error getting memories for run {run_id}: {e}")
             else:
                 # Fallback: try user_id filter (may not work but worth trying)
-                result = self.memory.get_all(filters={"user_id": user_id})
+                # result = self.memory.get_all(filters={"user_id": user_id})
+                result = self.memory.get_all(filters={"user_id": user_id}, version="v2")
                 if isinstance(result, dict):
                     all_memories = result.get("results", result.get("memories", []))
                 else:
